@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-	<name>EDF_FreeRTOS</name>
+	<name>EDF_VD_FreeRTOS_STM32</name>
 	<comment></comment>
 	<projects>
 	</projects>
