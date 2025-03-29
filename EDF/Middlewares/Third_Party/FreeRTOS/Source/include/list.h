@@ -479,6 +479,13 @@ void vListInsert( List_t * const pxList,
 void vListInsertEnd( List_t * const pxList,
                      ListItem_t * const pxNewListItem ) PRIVILEGED_FUNCTION;
 
+
+
+void vListEDFInsertEnd( List_t *pxList, ListItem_t *pxNewListItem );
+
+
+void vListInsertOverFlow( List_t *pxList, ListItem_t *pxNewListItem );
+
 /*
  * Remove an item from a list.  The list item has a pointer to the list that
  * it is in, so only the list item need be passed into the function.

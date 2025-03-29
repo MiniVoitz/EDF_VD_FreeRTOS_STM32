@@ -3071,6 +3071,12 @@ UBaseType_t uxTaskGetTaskNumber( TaskHandle_t xTask ) PRIVILEGED_FUNCTION;
 void vTaskSetTaskNumber( TaskHandle_t xTask,
                          const UBaseType_t uxHandle ) PRIVILEGED_FUNCTION;
 
+
+
+#if ( configUSE_EDF_SCHEDULER == 1 )
+			unsigned long task_ADD_DEADLINE( void * );
+#endif
+
 /*
  * Only available when configUSE_TICKLESS_IDLE is set to 1.
  * If tickless mode is being used, or a low power mode is implemented, then

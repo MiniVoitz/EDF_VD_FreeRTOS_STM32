@@ -27,9 +27,9 @@
  */
 
 /* Standard includes. */
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
 /* Defining MPU_WRAPPERS_INCLUDED_FROM_API_FILE prevents task.h from redefining
  * all the API functions to use the MPU wrappers.  That should only be done when
  * task.h is included from an application file. */
@@ -115,7 +115,7 @@
     #define configIDLE_TASK_NAME    "IDLE"
 #endif
 
-#if ( configUSE_PORT_OPTIMISED_TASK_SELECTION == 0 )
+#if ( configUSE_PORT_OPTIMISED_TASK_SELECTION == 0 ) \
 
 /* If configUSE_PORT_OPTIMISED_TASK_SELECTION is 0 then task selection is
  * performed in a generic way that is not optimised to any particular
@@ -124,12 +124,12 @@
 /* uxTopReadyPriority holds the priority of the highest priority ready
  * state task. */
     #define taskRECORD_READY_PRIORITY( uxPriority ) \
-    {                                               \
-        if( ( uxPriority ) > uxTopReadyPriority )   \
-        {                                           \
-            uxTopReadyPriority = ( uxPriority );    \
-        }                                           \
-    } /* taskRECORD_READY_PRIORITY */
+	{                                               \
+		if( ( uxPriority ) > uxTopReadyPriority )   \
+		{                                           \
+			uxTopReadyPriority = ( uxPriority );    \
+		}                                           \
+	} /* taskRECORD_READY_PRIORITY */
 
 /*-----------------------------------------------------------*/
 
@@ -193,6 +193,17 @@
     }
 
 #endif /* configUSE_PORT_OPTIMISED_TASK_SELECTION */
+
+
+#if ( configUSE_EDF_SCHEDULER == 0)
+    #define SCHEDULER_INSERT_TASK(pxTCB) \
+        taskRECORD_READY_PRIORITY( ( pxTCB )->uxPriority ); \
+        vListInsertEnd( ( xList * ) &( pxReadyTasksLists[ ( pxTCB )->uxPriority ] ), &( ( pxTCB )->xGenericListItem ) )
+#else
+    #define SCHEDULER_INSERT_TASK_EDF(pxTCB) \
+        taskRECORD_READY_PRIORITY( ( pxTCB )->uxPriority ); \
+        vListEDFInsertEnd( ( xList * ) &( pxReadyTasksLists[ ( pxTCB )->uxPriority ] ), &( ( pxTCB )->xGenericListItem ) )
+#endif
 
 /*-----------------------------------------------------------*/
 
@@ -318,6 +329,12 @@ typedef struct tskTaskControlBlock       /* The old naming convention is used to
     #if ( configUSE_POSIX_ERRNO == 1 )
         int iTaskErrno;
     #endif
+
+	#if ( configUSE_EDF_SCHEDULER == 1)
+		unsigned UBaseType_t ulDeadline;
+		unsigned UBaseType_t ulAbsDeadline;
+	#endif
+
 } tskTCB;
 
 /* The old tskTCB name is maintained above then typedefed to the new TCB_t name
@@ -755,6 +772,7 @@ static void prvAddNewTaskToReadyList( TCB_t * pxNewTCB ) PRIVILEGED_FUNCTION;
                 }
             }
         }
+
         #else /* portSTACK_GROWTH */
         {
             StackType_t * pxStack;
@@ -1079,6 +1097,11 @@ static void prvAddNewTaskToReadyList( TCB_t * pxNewTCB )
             pxNewTCB->uxTCBNumber = uxTaskNumber;
         }
         #endif /* configUSE_TRACE_FACILITY */
+
+		#if( configUSE_EDF_SCHEDULER == 1 )
+				pxNewTCB->ulDeadline = *(unsigned UBaseType_t *)pvParameters;
+		#endif
+
         traceTASK_CREATE( pxNewTCB );
 
         prvAddTaskToReadyList( pxNewTCB );
@@ -5405,6 +5428,17 @@ static void prvAddCurrentTaskToDelayedList( TickType_t xTicksToWait,
     }
     #endif /* INCLUDE_vTaskSuspend */
 }
+
+volatile unsigned long ulHighFreqTicks = 0xFFFFF000;
+
+#if ( configUSE_EDF_SCHEDULER == 1 )
+	unsigned long task_ADD_DEADLINE( void * pxTCB )
+	{
+		TCB_t * TempTCB;
+		TempTCB = ( TCB_t * )pxTCB;
+	  return TempTCB->ulAbsDeadline = TempTCB->ulDeadline + ulHighFreqTicks;
+	}
+#endif
 
 /* Code below here allows additional code to be inserted into this source file,
  * especially where access to file scope functions and data is needed (for example

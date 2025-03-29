@@ -176,7 +176,8 @@ header file. */
  * except for CM33, the following define should be added 
  * #define SysTick_Handler xPortSysTickHandler   */
 
-
+#define configUSE_EDF_SCHEDULER 		1
+extern volatile unsigned long ulHighFreqTicks = 0xFFFFF000;
 #endif /* FREERTOS_CONFIG_H */
 
 /* IMPORTANT: xPortSysTickHandler define MUST be commented, when used with STM32Cube firmware, 
